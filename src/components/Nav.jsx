@@ -17,6 +17,13 @@ function Nav() {
         <li>
           <Link to="/signup">Signup</Link>
         </li>
+
+        <li>
+          <Link to="/add-movie">Add movie</Link>
+        </li>
+        <li>
+          <button>Logout</button>
+        </li>
       </ul>
     </nav>
   );
