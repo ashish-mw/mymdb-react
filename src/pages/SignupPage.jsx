@@ -1,9 +1,9 @@
 import Page from "../components/Page";
 
-function LoginPage() {
+function SignupPage() {
   return (
-    <Page title="Login">
-      <h1>Login</h1>
+    <Page title="Signup">
+      <h1>Signup</h1>
       <form action="">
         <label htmlFor="username">
           Username
@@ -27,10 +27,10 @@ function LoginPage() {
           />
         </label>
 
-        <button type="submit">Login</button>
+        <button type="submit">Signup</button>
       </form>
     </Page>
   );
 }
 
-export default LoginPage;
+export default SignupPage;

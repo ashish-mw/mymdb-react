@@ -3,7 +3,6 @@ import Nav from "./Nav";
 
 function Layout(props) {
   let { skipNav } = props;
-  console.log("skip ", skipNav);
   return (
     <Container>
       {!skipNav && <Nav />}

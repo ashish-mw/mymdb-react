@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { Routes, Route, BrowserRouter } from "react-router-dom";
 import MovieListPage from "./pages/MovieListPage";
 import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
 import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {
@@ -11,6 +12,7 @@ function App() {
         <Routes>
           <Route path="/" element={<MovieListPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
