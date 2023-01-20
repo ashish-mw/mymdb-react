@@ -4,6 +4,7 @@ import MovieListPage from "./pages/MovieListPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import AddMoviePage from "./pages/AddMoviePage";
+import MovieInfoPage from "./pages/MovieInfoPage";
 import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/add-movie" element={<AddMoviePage />} />
+          <Route path="/info/:movieId" element={<MovieInfoPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
