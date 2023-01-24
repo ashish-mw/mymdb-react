@@ -1,20 +1,26 @@
-import { Suspense, lazy, useReducer } from "react";
+import { Suspense, lazy, useReducer, useEffect } from "react";
 import { Routes, Route, BrowserRouter } from "react-router-dom";
+import axios from "axios";
+
+import { setTokenInStorage, getTokenFromStorage } from "./services/storage";
+import { apiGetUserInfo } from "./services/api/user";
+import { setAuthHeaders } from "./services/api";
 
 import MovieListPage from "./pages/MovieListPage";
 import NotFoundPage from "./pages/NotFoundPage";
+
+import StateContext from "./contexts/StateContext";
+import DispatchContext from "./contexts/DispatchContext";
 
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const SignupPage = lazy(() => import("./pages/SignupPage"));
 const AddMoviePage = lazy(() => import("./pages/AddMoviePage"));
 const MovieInfoPage = lazy(() => import("./pages/MovieInfoPage"));
 
-import StateContext from "./contexts/StateContext";
-import DispatchContext from "./contexts/DispatchContext";
-
 function App() {
   const initialState = {
-    isLoggedIn: false,
+    isLoggedIn: Boolean(getTokenFromStorage()),
+    token: getTokenFromStorage(),
     user: null,
   };
 
@@ -24,11 +30,17 @@ function App() {
         return {
           ...state,
           isLoggedIn: true,
+          token: action.value,
         };
       case "logout":
         return {
           ...state,
           isLoggedIn: false,
+        };
+      case "set_user":
+        return {
+          ...state,
+          user: action.value,
         };
       default:
         return state;
@@ -36,6 +48,34 @@ function App() {
   }
 
   const [state, dispatch] = useReducer(appReducer, initialState);
+
+  useEffect(() => {
+    if (state.token) {
+      setTokenInStorage({ token: state.token });
+      setAuthHeaders({ accessToken: state.token });
+    }
+  }, [state.token]);
+
+  useEffect(() => {
+    const request = axios.CancelToken.source();
+
+    async function getUserInfo() {
+      try {
+        const { data } = await apiGetUserInfo({ cancelToken: request.token });
+        dispatch({ type: "set_user", value: data });
+      } catch (error) {
+        console.log(error);
+      } finally {
+        // TODO:
+      }
+    }
+
+    if (state.isLoggedIn && state.token) {
+      getUserInfo();
+    }
+
+    return () => request.cancel();
+  }, [state.isLoggedIn, state.token]);
 
   return (
     <StateContext.Provider value={state}>

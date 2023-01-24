@@ -1,10 +1,16 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useContext } from "react";
 import axios from "axios";
+import { Navigate } from "react-router-dom";
 
 import { apiLogin } from "../services/api/user";
 import Page from "../components/Page";
+import DispatchContext from "../contexts/DispatchContext";
+import StateContext from "../contexts/StateContext";
 
 function LoginPage() {
+  const appState = useContext(StateContext);
+  const appDispatch = useContext(DispatchContext);
+
   const [state, setState] = useState({
     username: "",
     password: "",
@@ -25,15 +31,15 @@ function LoginPage() {
     async function doLogin() {
       setState((prev) => ({ ...prev, isLoading: true }));
       try {
-        const resp = await apiLogin({
+        const { data } = await apiLogin({
           payload: {
             username: state.username,
             password: state.password,
           },
           cancelToken: request.token,
         });
-        console.log(resp);
         resetState();
+        appDispatch({ type: "login", value: data.token });
       } catch (error) {
         // TODO: show errors in UI
         console.log(error);
@@ -74,7 +80,9 @@ function LoginPage() {
     });
   }
 
-  return (
+  return appState.user ? (
+    <Navigate to="/" />
+  ) : (
     <Page title="Login">
       <h1>Login</h1>
       <form onSubmit={handleSubmit}>
