@@ -36,6 +36,8 @@ function App() {
         return {
           ...state,
           isLoggedIn: false,
+          token: "",
+          user: null,
         };
       case "set_user":
         return {
@@ -55,6 +57,13 @@ function App() {
       setAuthHeaders({ accessToken: state.token });
     }
   }, [state.token]);
+
+  useEffect(() => {
+    if (!state.isLoggedIn) {
+      setTokenInStorage({ token: "" });
+      setAuthHeaders({ accessToken: "" });
+    }
+  }, [state.isLoggedIn]);
 
   useEffect(() => {
     const request = axios.CancelToken.source();
