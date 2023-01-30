@@ -8,6 +8,7 @@ import { setAuthHeaders } from "./services/api";
 
 import MovieListPage from "./pages/MovieListPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import PrivateRoute from "./components/PrivateRoute";
 
 import StateContext from "./contexts/StateContext";
 import DispatchContext from "./contexts/DispatchContext";
@@ -95,7 +96,10 @@ function App() {
               <Route path="/" element={<MovieListPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
-              <Route path="/add-movie" element={<AddMoviePage />} />
+              <Route
+                path="/add-movie"
+                element={<PrivateRoute outlet={<AddMoviePage />} />}
+              />
               <Route path="/info/:movieId" element={<MovieInfoPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
