@@ -64,7 +64,12 @@ function AddMoviePage() {
           cancelToken: request.token,
         });
         resetState();
-        navigate("/");
+        // navigate("/");
+        setNewMovie((draft) => {
+          draft.apiStatus.type = "success";
+          draft.apiStatus.message = "Movie added successfully!";
+          draft.apiStatus.show = true;
+        });
         // TODO: show a success modal, and on its onclick, navigate to the movie list page
       } catch (error) {
         // TODO: show errors in UI
@@ -143,12 +148,17 @@ function AddMoviePage() {
     });
   }
 
+  // TODO: improve on this later!
   function clearApiStatus() {
-    setNewMovie((draft) => {
-      draft.apiStatus.show = false;
-      draft.apiStatus.type = "success";
-      draft.apiStatus.message = "";
-    });
+    if (newMovie.apiStatus.type == "success" && newMovie.apiStatus.show) {
+      navigate("/");
+    } else {
+      setNewMovie((draft) => {
+        draft.apiStatus.show = false;
+        draft.apiStatus.type = "success";
+        draft.apiStatus.message = "";
+      });
+    }
   }
 
   return (
