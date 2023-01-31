@@ -5,3 +5,11 @@
 .text-center {
   text-align: center;
 }
+
+.w-100 {
+  width: 100%;
+}
+
+.m-b-sm {
+  margin-bottom: 5px;
+}

@@ -5,11 +5,20 @@ import Page from "../components/Page";
 import Loading from "../components/Loading";
 import Goback from "../components/Goback";
 import Modal from "../components/Modal";
-import { apiAddMovie } from "../services/api/movies";
-import { useNavigate } from "react-router-dom";
+import { apiUpdateMovie, apiGetMovieInfo } from "../services/api/movies";
+import { useNavigate, useParams } from "react-router-dom";
 
-function AddMoviePage() {
-  const [newMovie, setNewMovie] = useImmer({
+function makeGenreArray(str) {
+  // Horror, Sci-fi
+  const arr = str.split(",").map((g) => g.charAt(0).toUpperCase() + g.slice(1));
+  return arr;
+}
+
+function EditMoviePage() {
+  let { movieId } = useParams();
+
+  const [editMovie, setEditMovie] = useImmer({
+    id: "",
     name: "",
     // genre: "",
     language: "",
@@ -22,6 +31,12 @@ function AddMoviePage() {
       type: "success", // success, error,
       message: "",
     },
+    originalMovieInfo: {
+      name: "",
+      createdUserInfo: {},
+      updatedAt: "",
+    },
+    reloadCount: 0,
   });
 
   const navigate = useNavigate();
@@ -29,60 +44,107 @@ function AddMoviePage() {
   const genres = ["Horror", "Scifi", "Romance", "Adventure", "Crime"];
   const languages = ["English", "Tamil", "Hindi", "French", "Telugu"];
 
+  useEffect(() => {
+    const request = axios.CancelToken.source();
+
+    async function getMovieInfo() {
+      setEditMovie((draft) => {
+        draft.isLoading = true;
+      });
+      try {
+        const { data: movieData } = await apiGetMovieInfo({
+          movieId,
+          cancelToken: request.token,
+        });
+        // original info
+        setEditMovie((draft) => {
+          draft.originalMovieInfo = movieData;
+        });
+
+        // editing
+        setEditMovie((draft) => {
+          draft.id = movieData.id;
+          draft.name = movieData.name;
+          draft.language = movieData.language;
+          draft.yearOfRelease = movieData.yearOfRelease;
+          draft.genreList = makeGenreArray(movieData.genre);
+        });
+      } catch (error) {
+        // TODO: handle errors here!
+        console.log(error);
+        // setError("Failed to fetch movie info");
+      } finally {
+        setEditMovie((draft) => {
+          draft.isLoading = false;
+        });
+      }
+    }
+
+    if (movieId || reloadCount) {
+      console.log("calling apiGetMovieInfo with ", movieId);
+      getMovieInfo();
+    }
+
+    return () => {
+      request.cancel();
+    };
+  }, [movieId, editMovie.reloadCount]);
+
   const isValid = useMemo(() => {
     if (
-      newMovie.name &&
-      newMovie.language &&
-      newMovie.yearOfRelease &&
-      newMovie.genreList.length
+      editMovie.name &&
+      editMovie.language &&
+      editMovie.yearOfRelease &&
+      editMovie.genreList.length
     ) {
       return true;
     }
     return false;
   }, [
-    newMovie.name,
-    newMovie.language,
-    newMovie.yearOfRelease,
-    newMovie.genreList.length,
+    editMovie.name,
+    editMovie.language,
+    editMovie.yearOfRelease,
+    editMovie.genreList.length,
   ]);
 
   useEffect(() => {
     const request = axios.CancelToken.source();
 
-    async function doNewMovieSubmit() {
-      setNewMovie((draft) => {
+    async function doEditMovieSubmit() {
+      setEditMovie((draft) => {
         draft.isLoading = true;
       });
       try {
-        const { data } = await apiAddMovie({
+        const payload = {
+          name: editMovie.name,
+          genre: editMovie.genreList.map((g) => g.toLowerCase()).join(","),
+          language: editMovie.language,
+          yearOfRelease: editMovie.yearOfRelease,
+        };
+
+        console.log("payload ...", payload);
+        await apiUpdateMovie({
+          movieId: editMovie.id,
           payload: {
-            name: newMovie.name,
-            genre: newMovie.genreList.map((g) => g.toLowerCase()).join(","),
-            language: newMovie.language,
-            yearOfRelease: newMovie.yearOfRelease,
+            ...payload,
           },
           cancelToken: request.token,
         });
         resetState();
         // navigate("/");
-        setNewMovie((draft) => {
-          draft.apiStatus.type = "success";
-          draft.apiStatus.message = "Movie added successfully!";
-          draft.apiStatus.show = true;
-        });
         // TODO: show a success modal, and on its onclick, navigate to the movie list page
       } catch (error) {
         // TODO: show errors in UI
         console.log(error);
         if (error.response && error.response.data.message) {
-          setNewMovie((draft) => {
+          setEditMovie((draft) => {
             draft.apiStatus.type = "error";
             draft.apiStatus.message = error.response.data.message;
             draft.apiStatus.show = true;
           });
         }
       } finally {
-        setNewMovie((draft) => {
+        setEditMovie((draft) => {
           draft.isLoading = false;
           draft.callApi = false;
         });
@@ -90,52 +152,49 @@ function AddMoviePage() {
     }
 
     if (
-      newMovie.name &&
-      newMovie.language &&
-      newMovie.yearOfRelease &&
-      newMovie.genreList.length &&
-      newMovie.callApi
+      editMovie.name &&
+      editMovie.language &&
+      editMovie.yearOfRelease &&
+      editMovie.genreList.length &&
+      editMovie.callApi &&
+      editMovie.id
     ) {
-      doNewMovieSubmit();
+      doEditMovieSubmit();
     }
 
     return () => {
       request.cancel();
     };
   }, [
-    newMovie.callApi,
-    newMovie.name,
-    newMovie.language,
-    newMovie.yearOfRelease,
-    newMovie.genreList.length,
+    editMovie.id,
+    editMovie.callApi,
+    editMovie.name,
+    editMovie.language,
+    editMovie.yearOfRelease,
+    editMovie.genreList.length,
   ]);
 
   function resetState() {
-    setNewMovie((draft) => {
-      draft.name = "";
-      draft.language = "";
-      draft.yearOfRelease = 0;
-      draft.genreList = [];
-      draft.isLoading = false;
-      draft.callApi = false;
+    setEditMovie((draft) => {
+      draft.reloadCount++;
     });
   }
 
   function handleChange({ e, type }) {
     if (type === "name") {
-      setNewMovie((draft) => {
+      setEditMovie((draft) => {
         draft.name = e.target.value;
       });
     } else if (type === "genre") {
-      setNewMovie((draft) => {
+      setEditMovie((draft) => {
         draft.genreList.push(e.target.value);
       });
     } else if (type === "language") {
-      setNewMovie((draft) => {
+      setEditMovie((draft) => {
         draft.language = e.target.value;
       });
     } else if (type === "yearOfRelease") {
-      setNewMovie((draft) => {
+      setEditMovie((draft) => {
         draft.yearOfRelease = e.target.value;
       });
     }
@@ -143,39 +202,35 @@ function AddMoviePage() {
 
   function handleSubmit(e) {
     e.preventDefault();
-    setNewMovie((draft) => {
+    setEditMovie((draft) => {
       draft.callApi = true;
     });
   }
 
   // TODO: improve on this later!
   function clearApiStatus() {
-    if (newMovie.apiStatus.type == "success" && newMovie.apiStatus.show) {
-      navigate("/");
-    } else {
-      setNewMovie((draft) => {
-        draft.apiStatus.show = false;
-        draft.apiStatus.type = "success";
-        draft.apiStatus.message = "";
-      });
-    }
+    setEditMovie((draft) => {
+      draft.apiStatus.show = false;
+      draft.apiStatus.type = "success";
+      draft.apiStatus.message = "";
+    });
   }
 
   return (
-    <Page title="Add new movie">
-      {newMovie.isLoading && <Loading />}
+    <Page title="Edit movie">
+      {editMovie.isLoading && <Loading />}
 
       <Goback />
 
-      {newMovie.apiStatus.show && (
+      {editMovie.apiStatus.show && (
         <Modal
-          type={newMovie.apiStatus.type}
-          message={newMovie.apiStatus.message}
+          type={editMovie.apiStatus.type}
+          message={editMovie.apiStatus.message}
           onClick={clearApiStatus}
         />
       )}
 
-      <h1>Add new movie</h1>
+      <h1>Editing {editMovie.originalMovieInfo.name}</h1>
 
       <form onSubmit={handleSubmit}>
         <label htmlFor="movie-name">
@@ -186,7 +241,7 @@ function AddMoviePage() {
             name="movie-name"
             placeholder="Movie name"
             required
-            value={newMovie.name}
+            value={editMovie.name}
             onChange={(e) => handleChange({ e, type: "name" })}
           />
         </label>
@@ -201,7 +256,7 @@ function AddMoviePage() {
                 name={`checkbox-${g}`}
                 value={g}
                 onChange={(e) => handleChange({ e, type: "genre" })}
-                checked={newMovie.genreList.includes(g)}
+                checked={editMovie.genreList.includes(g)}
               />
               {g}
             </label>
@@ -214,7 +269,7 @@ function AddMoviePage() {
             id="movie-lang"
             name="movie-lang"
             required=""
-            defaultValue={newMovie.language}
+            value={editMovie.language}
             onChange={(e) => handleChange({ e, type: "language" })}
           >
             <option disabled>Select…</option>
@@ -234,21 +289,21 @@ function AddMoviePage() {
             name="movie-year"
             placeholder="Year of release"
             required
-            value={newMovie.yearOfRelease}
+            value={editMovie.yearOfRelease}
             onChange={(e) => handleChange({ e, type: "yearOfRelease" })}
           />
         </label>
 
         <button
           type="submit"
-          aria-busy={newMovie.isLoading}
+          aria-busy={editMovie.isLoading}
           disabled={!isValid}
         >
-          Add movie
+          Update movie
         </button>
       </form>
     </Page>
   );
 }
 
-export default AddMoviePage;
+export default EditMoviePage;
