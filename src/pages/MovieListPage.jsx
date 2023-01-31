@@ -4,6 +4,7 @@ import axios from "axios";
 
 import Page from "../components/Page";
 import Loading from "../components/Loading";
+import { formatDate } from "../services/utils";
 
 import { apiGetMovieList } from "../services/api/movies";
 
@@ -65,7 +66,7 @@ function MovieListPage() {
                   <td>{m.genre}</td>
                   <td>{m.language}</td>
                   <td>{m.yearOfRelease}</td>
-                  <td>{m.updatedAt}</td>
+                  <td>{formatDate(m.updatedAt)}</td>
                 </tr>
               ))
             ) : (

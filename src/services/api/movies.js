@@ -7,3 +7,7 @@ export function apiGetMovieList({ cancelToken }) {
 export function apiAddMovie({ payload, cancelToken }) {
   return http.post("/movies", payload, { cancelToken });
 }
+
+export function apiGetMovieInfo({ movieId, cancelToken }) {
+  return http.get(`/movies/${movieId}`, { cancelToken });
+}
