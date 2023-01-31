@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useContext } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 import Page from "../components/Page";
@@ -7,13 +7,14 @@ import Loading from "../components/Loading";
 import Goback from "../components/Goback";
 import Rating from "../components/Rating";
 
-import { apiGetMovieInfo } from "../services/api/movies";
+import { apiGetMovieInfo, apiDeleteMovie } from "../services/api/movies";
 import { formatDate } from "../services/utils";
 
 import StateContext from "../contexts/StateContext";
 
 function MovieInfoPage() {
   const appState = useContext(StateContext);
+  const navigate = useNavigate();
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -22,6 +23,8 @@ function MovieInfoPage() {
     createdUserInfo: {},
     updatedAt: "",
   });
+
+  const [deleteMovie, setDeleteMovie] = useState(false);
 
   let { movieId } = useParams();
 
@@ -55,6 +58,38 @@ function MovieInfoPage() {
     };
   }, [movieId]);
 
+  useEffect(() => {
+    const request = axios.CancelToken.source();
+
+    async function callDeleteMovie() {
+      setIsLoading(true);
+      try {
+        await apiDeleteMovie({
+          movieId: movieInfo.id,
+          cancelToken: request.token,
+        });
+        // TODO: show a modal for successful delete and then clicking on OK
+        // would bring them to the movie list page
+        navigate("/");
+      } catch (error) {
+        // TODO: handle errors here!
+        console.log(error);
+        // setError("Failed to fetch movie info");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    if (deleteMovie) {
+      console.log("deleting ", movieInfo.id);
+      callDeleteMovie();
+    }
+
+    return () => {
+      request.cancel();
+    };
+  }, [deleteMovie, movieInfo]);
+
   const pageTitle = useMemo(() => {
     if (movieInfo) {
       return "Info on " + movieInfo.name;
@@ -72,6 +107,10 @@ function MovieInfoPage() {
     }
     return false;
   }, [appState.isLoggedIn, movieInfo.createdUserInfo]);
+
+  function handleDelete() {
+    setDeleteMovie(true);
+  }
 
   return (
     <Page title={pageTitle}>
@@ -113,7 +152,9 @@ function MovieInfoPage() {
                   Edit
                 </Link>
               </div>
-              <button className="secondary">Delete</button>
+              <button onClick={handleDelete} className="secondary">
+                Delete
+              </button>
             </>
           )}
         </article>
