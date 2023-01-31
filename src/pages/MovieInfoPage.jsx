@@ -147,7 +147,7 @@ function MovieInfoPage() {
                 <Link
                   className="w-100"
                   role="button"
-                  to={`/movies/${movieInfo.id}/edit`}
+                  to={`/edit/${movieInfo.id}`}
                 >
                   Edit
                 </Link>

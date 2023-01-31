@@ -15,3 +15,7 @@ export function apiGetMovieInfo({ movieId, cancelToken }) {
 export function apiDeleteMovie({ movieId, cancelToken }) {
   return http.delete(`/movies/${movieId}`, { cancelToken });
 }
+
+export function apiUpdateMovie({ movieId, payload, cancelToken }) {
+  return http.put(`/movies/${movieId}`, payload, { cancelToken });
+}

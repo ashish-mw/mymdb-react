@@ -16,6 +16,7 @@ import DispatchContext from "./contexts/DispatchContext";
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const SignupPage = lazy(() => import("./pages/SignupPage"));
 const AddMoviePage = lazy(() => import("./pages/AddMoviePage"));
+const EditMoviePage = lazy(() => import("./pages/EditMoviePage"));
 const MovieInfoPage = lazy(() => import("./pages/MovieInfoPage"));
 
 function App() {
@@ -75,6 +76,16 @@ function App() {
         dispatch({ type: "set_user", value: data });
       } catch (error) {
         console.log(error);
+        if (
+          process.env.NODE_ENV === "development" &&
+          error.message == "canceled"
+        ) {
+          console.log(
+            "In development mode :: request canceled for userinfo fetch"
+          );
+          return;
+        }
+        dispatch({ type: "logout" });
       } finally {
         // TODO:
       }
@@ -99,6 +110,10 @@ function App() {
               <Route
                 path="/add-movie"
                 element={<PrivateRoute outlet={<AddMoviePage />} />}
+              />
+              <Route
+                path="/edit/:movieId"
+                element={<PrivateRoute outlet={<EditMoviePage />} />}
               />
               <Route path="/info/:movieId" element={<MovieInfoPage />} />
               <Route path="*" element={<NotFoundPage />} />
